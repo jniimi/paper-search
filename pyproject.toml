@@ -1,0 +1,6 @@
+[project]
+name = "paper-search"
+version = "0.1.0"
+description = "Dev environment for the paper-search Claude Code plugin. The skill itself (skills/paper-search/paper_search.py) is standard-library only and runs under any python3."
+requires-python = ">=3.12"
+dependencies = []
