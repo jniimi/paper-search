@@ -1,8 +1,8 @@
 # Claude Code `paper-search` Skill
 
-You can search the published papers including preprints, and validate the existance of LLM-generated paper records easily.
+Search published papers (including preprints) and check whether LLM-generated paper records actually exist.
 
-This skill is based on the free API of [OpenAlex (http://openalex.org)](http://openalex.org). You can search the papers in details using API Key.
+This skill is built on the free [OpenAlex](http://openalex.org) API. An API key is optional (see [API key](#api-key-optional) below).
 
 ## Preparation
 ### Install the plugin
@@ -24,7 +24,45 @@ invoked automatically. No `uv` / `pip install` — Python standard library only.
 OpenAlex works without a key. To use the faster pool, set `OPENALEX_API_KEY`
 as an environment variable or in a `.env` file in your working directory.
 
-## Citations
-```LaTeX
-J. Niimi (2026) paper-search skill
+## Usage
+### Search papers by DOI, author, or keyword
+Just ask Claude in plain language — for example:
 ```
+Search academic papers by Junichiro Niimi using the paper-search skill
+```
+![Academic papers by Junichiro Niimi found in OpenAlex — 25 raw records, many appearing twice (preprint plus indexed mirror) and deduplicated in the result](img/sample1.png)
+
+### Flexible, conversational queries
+```
+How about this DOI? 10.48550/arXiv.2601.17094
+```
+![Found it — this DOI is a match. The title you originally searched, "The Mouth is Not the Brain", does exist, but as the lead phrase of a longer title: "The Mouth is Not the Brain: Bridging Energy-Based World Models and Language Generation."](img/sample2.png)
+
+### Arguments (for Claude)
+You can ask Claude to apply these options:
+- `--abstract`: Include each paper's full abstract in the results. This consumes more tokens, so it is off by default (but Claude often wants to use it anyway :D).
+- `--n`: Number of results to return. Default: 5.
+- `--sort`: Order of results — `relevance`, `citations` (most cited first), or `date` (newest first). `relevance` requires a keyword search. Default: OpenAlex's own order.
+
+
+## Citations / Contact
+Author: Junichiro Niimi ([@JvckAndersen](https://x.com/JvckAndersen))
+
+If you use this skill, please cite it as:
+
+> Niimi, J. (2026). *paper-search: A Claude Code plugin for academic paper
+> search and verification via OpenAlex* (Version 0.1.0) [Computer software].
+> https://github.com/jniimi/paper-search
+
+```bibtex
+@misc{niimi2026papersearch,
+  author       = {Niimi, Junichiro},
+  title        = {paper-search: A Claude Code plugin for academic paper search and verification via OpenAlex},
+  year         = {2026},
+  howpublished = {\url{https://github.com/jniimi/paper-search}},
+  note         = {Version 0.1.0}
+}
+```
+
+## LICENSE
+Released under the [MIT License](LICENSE).
