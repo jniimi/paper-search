@@ -13,7 +13,7 @@ Usage:
     python3 paper_search.py --title "Hierarchical memorization in LLMs"
     python3 paper_search.py --doi 10.48550/arXiv.2511.08877 --abstract
     python3 paper_search.py --keyword "llm memorization" --year 2023 --n 10
-    python3 paper_search.py --authors "Nicholas Carlini" --sort date --n 10
+    python3 paper_search.py --authors "Nicholas Carlini" --type article,preprint,book-chapter --sort date
 
 One of --doi, --title, --keyword or --authors is required. Depends only on
 the Python
@@ -177,6 +177,7 @@ def fetch_by_search(
     authors: list[str],
     venue: str | None,
     year: int | None,
+    types: list[str],
     sort: str | None,
     n: int,
     api_key: str | None,
@@ -190,6 +191,9 @@ def fetch_by_search(
         filters.append(f"primary_location.source.display_name.search:{venue}")
     if year is not None:
         filters.append(f"publication_year:{year}")
+    if types:
+        # OpenAlex ORs values within one filter via `|`.
+        filters.append("type:" + "|".join(types))
     params: dict[str, str | int] = {"per-page": n}
     if filters:
         params["filter"] = ",".join(filters)
@@ -219,6 +223,12 @@ def main() -> None:
                    help="author name (repeatable, or comma-separated)")
     p.add_argument("--venue", help="journal / conference name")
     p.add_argument("--year", type=int, help="publication year")
+    p.add_argument("--type", dest="types", action="append", default=[],
+                   metavar="TYPE",
+                   help="OpenAlex work type filter (repeatable, or "
+                        "comma-separated), e.g. article, preprint, "
+                        "book-chapter, dataset, software. Multiple values "
+                        "are OR-ed")
     p.add_argument("--sort", choices=sorted(SORT_EXPR),
                    help="result order: date (newest first), citations (most "
                         "cited first), or relevance (needs --keyword). "
@@ -235,10 +245,13 @@ def main() -> None:
     if args.sort == "relevance" and not args.keyword:
         p.error("--sort relevance requires --keyword")
 
-    # Allow either repeated --authors or a single comma-separated value.
+    # Allow either repeated flags or a single comma-separated value.
     authors: list[str] = []
     for chunk in args.authors:
         authors.extend(a.strip() for a in chunk.split(",") if a.strip())
+    types: list[str] = []
+    for chunk in args.types:
+        types.extend(t.strip() for t in chunk.split(",") if t.strip())
 
     api_key = get_api_key()
     strategy = "doi_exact" if args.doi else "search"
@@ -254,6 +267,7 @@ def main() -> None:
                 authors=authors,
                 venue=args.venue,
                 year=args.year,
+                types=types,
                 sort=args.sort,
                 n=args.n,
                 api_key=api_key,
@@ -274,6 +288,7 @@ def main() -> None:
             "authors": authors,
             "venue": args.venue,
             "year": args.year,
+            "types": types,
             "sort": args.sort,
         },
         "strategy": strategy,

@@ -43,6 +43,7 @@ You can ask Claude to apply these options:
 - `--abstract`: Include each paper's full abstract in the results. This consumes more tokens, so it is off by default (but Claude often wants to use it anyway :D).
 - `--n`: Number of results to return. Default: 5.
 - `--sort`: Order of results — `relevance`, `citations` (most cited first), or `date` (newest first). `relevance` requires a keyword search. Default: OpenAlex's own order.
+- `--type`: Restrict results to OpenAlex work types, e.g. `article,preprint,book-chapter,review`. Handy for filtering out software, datasets, and other non-paper records. Default: no restriction.
 
 
 ## Citations / Contact

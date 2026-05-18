@@ -27,6 +27,7 @@ Standard-library only — no install step. Exactly one of `--doi`, `--title`,
 | `--authors` | Author name; repeatable or comma-separated. Valid on its own. |
 | `--venue` | Journal / conference name filter. |
 | `--year` | Publication year (exact match). |
+| `--type` | OpenAlex work type filter, repeatable or comma-separated (e.g. `article,preprint`). Multiple values are OR-ed. |
 | `--sort` | `date` (newest first), `citations` (most cited), or `relevance` (requires `--keyword`). |
 | `--n` | Number of candidates (default 5). |
 | `--abstract` | Include the reconstructed abstract in each candidate. |
@@ -35,10 +36,20 @@ Standard-library only — no install step. Exactly one of `--doi`, `--title`,
 
 - **Verify a citation exists** — prefer `--doi` if a DOI is given (a clean
   miss returns empty `candidates` = strong "does not exist" signal). Else
-  use `--title` plus `--authors` / `--year` to pin it down.
+  use `--title` plus `--authors` / `--year` to pin it down. **Do not** add
+  `--type` when verifying — the real record may be a book chapter,
+  dataset, etc., and restricting type would cause a false "does not exist".
 - **Discover papers on a topic** — use `--keyword`.
 - **Find an author's papers** — use `--authors` alone, usually with
   `--sort date` for recent work.
+
+For **discovery** searches (`--keyword` / `--authors`), default to
+`--type article,preprint,book-chapter,review` so software, datasets,
+editorials, peer reviews, etc. don't crowd the results — unless the user
+explicitly wants those other types. `book-chapter` is kept because OpenAlex
+classes Springer LNCS conference proceedings (MICCAI, ECCV, …) as
+`book-chapter`; `review` is kept because review articles are often the
+most useful discovery hits.
 
 ## Reading the output
 

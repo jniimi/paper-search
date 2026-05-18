@@ -40,7 +40,8 @@ Standard library only — no `uv`, no `pip install`. One of `--doi`, `--title`, 
 - Otherwise → `GET /works` search (`strategy: "search"`). Key distinction:
   - `--title` → `title.search` **filter** (title-only; for verifying a known paper).
   - `--keyword` → `search` **query param** (full text: title + abstract + fulltext; for discovery).
-  - `--authors` / `--venue` / `--year` are filters that combine with either — and `--authors` alone is also a valid query (e.g. "recent papers by X").
+  - `--authors` / `--venue` / `--year` / `--type` are filters that combine with either — and `--authors` alone is also a valid query (e.g. "recent papers by X").
+  - `--type` filters by OpenAlex work type (comma-separated → OR-ed). Opt-in only; `SKILL.md` tells Claude to default to `article,preprint,book-chapter,review` for *discovery* but never restrict type when *verifying*. `book-chapter` is in the discovery set because OpenAlex classes Springer LNCS conference proceedings as `book-chapter` (e.g. U-Net / MICCAI).
   - `--sort` (`date` / `citations` / `relevance`) sets result order; `relevance` requires `--keyword` (guarded in `main()`). When omitted, OpenAlex's own order is used. Note `--sort` *replaces* relevance ranking, so `--keyword ... --sort citations` returns the most-cited loose matches, not the most relevant.
 - Output JSON: `query`, `strategy`, `n_requested`, `n_returned`, `candidates[]`, `errors[]`. `--abstract` adds the reconstructed abstract per candidate (rebuilt from OpenAlex's `abstract_inverted_index`).
 
