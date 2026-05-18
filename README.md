@@ -1,6 +1,7 @@
 # Claude Code `paper-search` Skill
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20264911.svg)](https://doi.org/10.5281/zenodo.20264911)
+[![arXiv](https://img.shields.io/badge/arXiv-2511.08877-b31b1b.svg)](https://arxiv.org/abs/2511.08877)
 
 Search published papers (including preprints) and check whether LLM-generated paper records actually exist.
 
@@ -47,6 +48,22 @@ You can ask Claude to apply these options:
 - `--sort`: Order of results — `relevance`, `citations` (most cited first), or `date` (newest first). `relevance` requires a keyword search. Default: OpenAlex's own order.
 - `--type`: Restrict results to OpenAlex work types, e.g. `article,preprint,book-chapter,review`. Handy for filtering out software, datasets, and other non-paper records. Default: no restriction.
 
+## Use-Cases
+
+### Verifying AI-generated references
+LLMs sometimes fabricate citations — yes, it's a real problem (see [Niimi, 2025 — *Hierarchical Memorization in Large Language Models*](https://doi.org/10.48550/arXiv.2511.08877)) — plausible-looking but non-existent papers (so-called "hallucinated references"). With `paper-search` you can instantly cross-check any reference against OpenAlex by DOI or title, catching ghosts before they reach your manuscript.
+
+### Literature discovery through conversation
+Ask Claude to find recent papers on a topic, then drill down interactively — filter by author, sort by citation count, pull abstracts, and refine your query in natural language. Useful for exploring an unfamiliar field or catching up on the latest work.
+
+### Writing papers in LaTeX with Claude Code (recommended)
+This is where `paper-search` shines most. When you draft or revise a paper in LaTeX inside Claude Code:
+
+- **Build `.bib` entries on the fly** — ask Claude to search for a paper and append a correct BibTeX record to your `.bib` file, complete with DOI and publication year pulled from OpenAlex.
+- **Audit an existing `.bib` file** — point Claude at your bibliography and let it walk through each entry, verifying that every cited paper actually exists and that the metadata (title, authors, year, DOI) matches the authoritative record.
+- **Catch stale or wrong DOIs** — preprints often get a new DOI once they appear in a journal; a quick DOI lookup reveals mismatches.
+
+Because the skill runs with zero dependencies (Python standard library only), it works anywhere Claude Code runs — no virtual-env setup needed mid-writing-session.
 
 ## Citations / Contact
 Author: Junichiro Niimi ([@JvckAndersen](https://x.com/JvckAndersen))
