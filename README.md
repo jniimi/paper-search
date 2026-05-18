@@ -1,5 +1,7 @@
 # Claude Code `paper-search` Skill
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20264911.svg)](https://doi.org/10.5281/zenodo.20264911)
+
 Search published papers (including preprints) and check whether LLM-generated paper records actually exist.
 
 This skill is built on the free [OpenAlex](http://openalex.org) API. An API key is optional (see [API key](#api-key-optional) below).
@@ -52,16 +54,17 @@ Author: Junichiro Niimi ([@JvckAndersen](https://x.com/JvckAndersen))
 If you use this skill, please cite it as:
 
 > Niimi, J. (2026). *paper-search: A Claude Code plugin for academic paper
-> search and verification via OpenAlex* (Version 0.1.0) [Computer software].
-> https://github.com/jniimi/paper-search
+> search and verification via OpenAlex* [Computer software]. Zenodo.
+> https://doi.org/10.5281/zenodo.20264911
 
 ```bibtex
-@misc{niimi2026papersearch,
-  author       = {Niimi, Junichiro},
-  title        = {paper-search: A Claude Code plugin for academic paper search and verification via OpenAlex},
-  year         = {2026},
-  howpublished = {\url{https://github.com/jniimi/paper-search}},
-  note         = {Version 0.1.0}
+@software{niimi2026papersearch,
+  author    = {Niimi, Junichiro},
+  title     = {paper-search: A Claude Code plugin for academic paper search and verification via OpenAlex},
+  year      = {2026},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.20264911},
+  url       = {https://doi.org/10.5281/zenodo.20264911}
 }
 ```
 
