@@ -6,7 +6,14 @@ This skill is based on the free API of [OpenAlex (http://openalex.org)](http://o
 
 ## Preparation
 ### Install the plugin
-Load it locally (no marketplace yet):
+In Claude Code, register the marketplace and install the plugin:
+```
+/plugin marketplace add jniimi/claude-skills-marketplace
+/plugin install paper-search@jniimi-claude-skills
+```
+Browse and manage installed plugins with `/plugin`.
+
+Alternatively, load it locally without the marketplace:
 ```
 $ claude --plugin-dir /path/to/paper-search
 ```
