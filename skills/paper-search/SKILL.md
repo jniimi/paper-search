@@ -12,9 +12,22 @@ whether a paper exists or matches what the user described.
 
 ## Running it
 
+### Claude Code
+
 ```bash
 python3 "${CLAUDE_SKILL_DIR}/paper_search.py" [args]
 ```
+
+### Codex
+
+Resolve the directory containing this `SKILL.md` to an absolute path, then run:
+
+```bash
+uv run python "<absolute-path-to-this-skill-directory>/paper_search.py" [args]
+```
+
+`CLAUDE_SKILL_DIR` is specific to Claude Code; do not assume it exists in
+Codex.
 
 Standard-library only — no install step. Exactly one of `--doi`, `--title`,
 `--keyword`, or `--authors` must be given (filters may be added on top).

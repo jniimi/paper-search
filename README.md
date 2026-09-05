@@ -1,4 +1,4 @@
-# Claude Code `paper-search` Skill
+# Claude Code / Codex `paper-search` Skill
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20264911.svg)](https://doi.org/10.5281/zenodo.20264911)
 [![arXiv](https://img.shields.io/badge/arXiv-2511.08877-b31b1b.svg)](https://arxiv.org/abs/2511.08877)
@@ -22,6 +22,20 @@ $ claude --plugin-dir /path/to/paper-search
 ```
 Ask Claude to look up or verify a paper and the `paper-search` skill is
 invoked automatically. No `uv` / `pip install` — Python standard library only.
+
+### Install in Codex
+
+Ask Codex to install the skill directly from this repository:
+
+```
+Install the paper-search skill from jniimi/paper-search, using the skill at skills/paper-search.
+```
+
+The skill is available from the next turn. For example:
+
+```
+Use the paper-search skill to verify the DOI 10.48550/arXiv.2511.08877.
+```
 
 ### API key (optional)
 OpenAlex works without a key. To use the faster pool, set `OPENALEX_API_KEY`
