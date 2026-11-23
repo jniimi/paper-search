@@ -40,6 +40,9 @@ Use the paper-search skill to verify the DOI 10.48550/arXiv.2511.08877.
 ### API key (optional)
 OpenAlex works without a key. To use the faster pool, set `OPENALEX_API_KEY`
 as an environment variable or in a `.env` file in your working directory.
+Multiple keys can be registered as `OPENALEX_API_KEY1`, `OPENALEX_API_KEY2`, …;
+they are tried in order, moving to the next key when one is rejected or hits
+its quota (HTTP 401/403/429), and finally falling back to the keyless pool.
 The key is sent as an `Authorization: Bearer` header (never in the URL) and is
 not included in error output.
 

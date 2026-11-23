@@ -18,9 +18,10 @@ Usage:
 One of --doi, --title, --keyword or --authors is required. Depends only on
 the Python
 standard
-library — no install step, no uv. OPENALEX_API_KEY is read from the
-environment (or a .env file) if present; it is optional — without it the
-request goes through OpenAlex's common pool.
+library — no install step, no uv. OPENALEX_API_KEY and OPENALEX_API_KEY<N>
+(N = 1, 2, …) are read from the environment (or a .env file) if present and
+tried in that order, moving to the next key on 401/403/429; they are
+optional — without any, the request goes through OpenAlex's common pool.
 """
 
 from __future__ import annotations
@@ -28,6 +29,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import ssl
 import sys
 import urllib.error
@@ -37,6 +39,13 @@ from pathlib import Path
 
 BASE_URL = "https://api.openalex.org"
 TIMEOUT = 60.0
+
+# OPENALEX_API_KEY, OPENALEX_API_KEY1, OPENALEX_API_KEY2, ...
+KEY_ENV_RE = re.compile(r"OPENALEX_API_KEY(\d*)")
+# Statuses that depend on the key (invalid / not activated / quota or rate
+# limit hit) — worth retrying with the next key. Anything else (400, 5xx, …)
+# would fail the same way with every key, so we stop there.
+ROTATE_ON = {401, 403, 429}
 
 
 def ssl_context() -> ssl.SSLContext:
@@ -73,16 +82,33 @@ def load_dotenv_if_present() -> None:
         os.environ.setdefault(key.strip(), value.strip().strip("'\""))
 
 
-def get_api_key() -> str | None:
+def get_api_keys() -> list[tuple[str, str]]:
+    """Collect ``(env var name, key)`` pairs to try, in order.
+
+    Picks up ``OPENALEX_API_KEY`` first, then ``OPENALEX_API_KEY<N>`` in
+    ascending N, from the environment or a ``.env`` file. Empty values are
+    skipped and duplicate keys are tried only once.
+    """
     load_dotenv_if_present()
-    key = os.environ.get("OPENALEX_API_KEY")
-    if not key:
+    found: list[tuple[int, str, str]] = []
+    for name, value in os.environ.items():
+        m = KEY_ENV_RE.fullmatch(name)
+        if m and value.strip():
+            order = int(m.group(1)) if m.group(1) else -1
+            found.append((order, name, value.strip()))
+    keys: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for _, name, value in sorted(found):
+        if value not in seen:
+            seen.add(value)
+            keys.append((name, value))
+    if not keys:
         print(
-            "Note: OPENALEX_API_KEY not found — querying OpenAlex via the "
+            "Note: no OPENALEX_API_KEY* found — querying OpenAlex via the "
             "common pool (no key required, but rate limits are stricter).",
             file=sys.stderr,
         )
-    return key
+    return keys
 
 
 def http_get_json(path: str, params: dict[str, str | int],
@@ -258,34 +284,60 @@ def main() -> None:
     for chunk in args.types:
         types.extend(t.strip() for t in chunk.split(",") if t.strip())
 
-    api_key = get_api_key()
+    def fetch(api_key: str | None) -> list[dict]:
+        if args.doi:
+            return fetch_by_doi(args.doi, api_key)
+        return fetch_by_search(
+            title=args.title,
+            keyword=args.keyword,
+            authors=authors,
+            venue=args.venue,
+            year=args.year,
+            types=types,
+            sort=args.sort,
+            n=args.n,
+            api_key=api_key,
+        )
+
+    # Try each registered key in turn, then the keyless common pool as a
+    # last resort. Only key-dependent failures (ROTATE_ON) move on to the
+    # next attempt. Only env var *names* are ever reported, never values.
+    attempts: list[tuple[str | None, str | None]] = [
+        *get_api_keys(), (None, None)
+    ]
     strategy = "doi_exact" if args.doi else "search"
     works: list[dict] = []
     errors: list[str] = []
-    try:
-        if args.doi:
-            works = fetch_by_doi(args.doi, api_key)
-        else:
-            works = fetch_by_search(
-                title=args.title,
-                keyword=args.keyword,
-                authors=authors,
-                venue=args.venue,
-                year=args.year,
-                types=types,
-                sort=args.sort,
-                n=args.n,
-                api_key=api_key,
+    api_key_used: str | None = None
+    for i, (name, key) in enumerate(attempts):
+        label = name or "no key"
+        is_last = i == len(attempts) - 1
+        try:
+            works = fetch(key)
+            api_key_used = name
+            errors = []
+            break
+        # Error messages deliberately omit the request URL. A non-empty
+        # `errors` means the lookup did not complete — empty `candidates`
+        # then says nothing about whether the paper exists.
+        except urllib.error.HTTPError as e:
+            errors.append(
+                f"OpenAlex request failed ({label}): HTTP {e.code} {e.reason}"
             )
-    # Error messages deliberately omit the request URL. A non-empty
-    # `errors` means the lookup did not complete — empty `candidates` then
-    # says nothing about whether the paper exists.
-    except urllib.error.HTTPError as e:
-        errors = [f"OpenAlex request failed: HTTP {e.code} {e.reason}"]
-    except urllib.error.URLError as e:
-        errors = [f"OpenAlex request error: {e.reason}"]
-    except (TimeoutError, OSError, ValueError) as e:
-        errors = [f"OpenAlex request error: {type(e).__name__}"]
+            if e.code in ROTATE_ON and not is_last:
+                print(f"Note: HTTP {e.code} with {label} — trying "
+                      f"{attempts[i + 1][0] or 'without a key'}.",
+                      file=sys.stderr)
+                continue
+            break
+        except urllib.error.URLError as e:
+            errors.append(f"OpenAlex request error ({label}): {e.reason}")
+            break
+        except (TimeoutError, OSError, ValueError) as e:
+            errors.append(
+                f"OpenAlex request error ({label}): {type(e).__name__}"
+            )
+            break
 
     candidates = [
         normalize_work(w, include_abstract=args.abstract) for w in works
@@ -305,6 +357,7 @@ def main() -> None:
         "n_requested": args.n,
         "n_returned": len(candidates),
         "lookup_ok": not errors,
+        "api_key_used": api_key_used,
         "candidates": candidates,
         "errors": errors,
     }

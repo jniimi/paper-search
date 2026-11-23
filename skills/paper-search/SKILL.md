@@ -67,7 +67,8 @@ most useful discovery hits.
 ## Reading the output
 
 JSON with `query`, `strategy` (`doi_exact` or `search`), `n_returned`,
-`lookup_ok`, `candidates[]`, and `errors[]`. Each candidate has `openalex_id`, `doi`,
+`lookup_ok`, `api_key_used` (env var name of the key that succeeded, or
+`null` for the common pool), `candidates[]`, and `errors[]`. Each candidate has `openalex_id`, `doi`,
 `title`, `authors`, `publication_year`, `venue`, `type`, `cited_by_count`,
 `is_retracted`, and `relevance_score` (search only).
 
@@ -90,7 +91,10 @@ counts as an absence signal.
 - `--sort` *replaces* relevance ranking. `--keyword ... --sort citations`
   returns the most-cited loose matches, not the most relevant — leave
   `--sort` off for precise keyword search.
-- `OPENALEX_API_KEY` is optional; without it requests use the common pool
-  (a note is printed to stderr — not an error). When set, it is sent as an
+- API keys are optional. `OPENALEX_API_KEY` and `OPENALEX_API_KEY<N>`
+  (`1`, `2`, …) are all picked up and tried in that order; on HTTP
+  401/403/429 the script moves to the next key, and finally to the common
+  pool. Without any key, requests use the common pool (a note is printed to
+  stderr — not an error). Each key is sent as an
   `Authorization: Bearer` header, never in the URL, and error messages do
   not include the request URL.
