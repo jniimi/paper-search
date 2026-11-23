@@ -1,7 +1,7 @@
 {
   "name": "paper-search",
   "description": "Search and verify academic papers via the OpenAlex API",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": {
     "name": "Junichiro Niimi"
   },

@@ -67,13 +67,20 @@ most useful discovery hits.
 ## Reading the output
 
 JSON with `query`, `strategy` (`doi_exact` or `search`), `n_returned`,
-`candidates[]`, and `errors[]`. Each candidate has `openalex_id`, `doi`,
+`lookup_ok`, `candidates[]`, and `errors[]`. Each candidate has `openalex_id`, `doi`,
 `title`, `authors`, `publication_year`, `venue`, `type`, `cited_by_count`,
 `is_retracted`, and `relevance_score` (search only).
 
 When verifying, compare the user's claimed title/authors/year against the
 candidates yourself and report whether it is a confident match, a near
 match, or absent. Flag `is_retracted: true`.
+
+**If `errors` is non-empty (`lookup_ok: false`), the lookup failed** (rate
+limit, network error, rejected key, bad query, …). Empty `candidates` then
+says nothing about existence: report the citation as **"could not be
+verified"**, never as "not found" / "does not exist". Retry later or with a
+different query. Only an error-free empty result (e.g. a clean DOI 404)
+counts as an absence signal.
 
 ## Caveats
 
@@ -84,4 +91,6 @@ match, or absent. Flag `is_retracted: true`.
   returns the most-cited loose matches, not the most relevant — leave
   `--sort` off for precise keyword search.
 - `OPENALEX_API_KEY` is optional; without it requests use the common pool
-  (a note is printed to stderr — not an error).
+  (a note is printed to stderr — not an error). When set, it is sent as an
+  `Authorization: Bearer` header, never in the URL, and error messages do
+  not include the request URL.

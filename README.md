@@ -40,6 +40,8 @@ Use the paper-search skill to verify the DOI 10.48550/arXiv.2511.08877.
 ### API key (optional)
 OpenAlex works without a key. To use the faster pool, set `OPENALEX_API_KEY`
 as an environment variable or in a `.env` file in your working directory.
+The key is sent as an `Authorization: Bearer` header (never in the URL) and is
+not included in error output.
 
 ## Usage
 ### Search papers by DOI, author, or keyword

@@ -85,8 +85,13 @@ def get_api_key() -> str | None:
     return key
 
 
-def http_get_json(path: str, params: dict[str, str | int]) -> dict:
+def http_get_json(path: str, params: dict[str, str | int],
+                  api_key: str | None = None) -> dict:
     """GET ``BASE_URL + path`` with query params and return parsed JSON.
+
+    The API key is sent as an ``Authorization: Bearer`` header, never as an
+    ``api_key`` query parameter, so it cannot leak through a URL (e.g. the
+    ``url`` attribute of an HTTPError).
 
     Raises urllib.error.HTTPError for non-2xx responses (callers handle 404).
     """
@@ -96,7 +101,10 @@ def http_get_json(path: str, params: dict[str, str | int]) -> dict:
     url = f"{BASE_URL}{path}"
     if query:
         url = f"{url}?{query}"
-    req = urllib.request.Request(url, headers={"User-Agent": "paper_search.py"})
+    headers = {"User-Agent": "paper_search.py"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=TIMEOUT,
                                 context=ssl_context()) as resp:
         return json.loads(resp.read().decode("utf-8"))
@@ -150,9 +158,8 @@ def fetch_by_doi(doi: str, api_key: str | None) -> list[dict]:
         if doi.lower().startswith(prefix):
             doi = doi[len(prefix):]
             break
-    params = {"api_key": api_key} if api_key else {}
     try:
-        work = http_get_json(f"/works/doi:{doi}", params)
+        work = http_get_json(f"/works/doi:{doi}", {}, api_key)
     except urllib.error.HTTPError as e:
         if e.code == 404:
             return []
@@ -204,9 +211,7 @@ def fetch_by_search(
         params["search"] = keyword
     if sort:
         params["sort"] = SORT_EXPR[sort]
-    if api_key:
-        params["api_key"] = api_key
-    data = http_get_json("/works", params)
+    data = http_get_json("/works", params, api_key)
     return (data.get("results") or [])[:n]
 
 
@@ -272,10 +277,15 @@ def main() -> None:
                 n=args.n,
                 api_key=api_key,
             )
+    # Error messages deliberately omit the request URL. A non-empty
+    # `errors` means the lookup did not complete — empty `candidates` then
+    # says nothing about whether the paper exists.
     except urllib.error.HTTPError as e:
-        errors = [f"OpenAlex request failed: {e.code} {e.url}"]
+        errors = [f"OpenAlex request failed: HTTP {e.code} {e.reason}"]
     except urllib.error.URLError as e:
         errors = [f"OpenAlex request error: {e.reason}"]
+    except (TimeoutError, OSError, ValueError) as e:
+        errors = [f"OpenAlex request error: {type(e).__name__}"]
 
     candidates = [
         normalize_work(w, include_abstract=args.abstract) for w in works
@@ -294,6 +304,7 @@ def main() -> None:
         "strategy": strategy,
         "n_requested": args.n,
         "n_returned": len(candidates),
+        "lookup_ok": not errors,
         "candidates": candidates,
         "errors": errors,
     }
